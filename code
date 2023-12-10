@@ -2,7 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define DHT_PIN 9  // Set the Arduino pin to which DHT22 sensor is connected
-#define DHTTYPE DHT22  // DHT22 sensor model
+#define DHT_TYPE DHT22  // DHT22 sensor model
 #define PIN  6  // Pin for connecting NeoPixel
 #define NUMPIXELS  8  // Number of NeoPixels
 
