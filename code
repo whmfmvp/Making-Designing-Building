@@ -1,15 +1,19 @@
 #include <DHT.h>
+#include <Adafruit_NeoPixel.h>
 
 #define DHT_PIN 9  // Set the Arduino pin to which DHT22 sensor is connected
-
-// Set the DHT model to DHT22
-#define DHT_TYPE DHT22
+#define DHTTYPE DHT22  // DHT22 sensor model
+#define PIN  6  // Pin for connecting NeoPixel
+#define NUMPIXELS  8  // Number of NeoPixels
 
 DHT dht(DHT_PIN, DHT_TYPE);
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   Serial.begin(9600);
   Serial.println("DHT22 Temperature and Humidity Sensor Test");
+  pixels.begin(); // Initialize NeoPixel
   dht.begin();
 }
 
@@ -33,4 +37,26 @@ void loop() {
   Serial.print("Temperature: ");
   Serial.print(temperature);
   Serial.println("°C");
+
+  // Map the humidity value to the number of lit NeoPixels
+  int numPixelsToLight = map(humidity, 10, 90, 1, 8);
+
+  // Light up NeoPixels
+  colorWipe(numPixelsToLight, pixels.Color(0, 255, 0)); // Using RGB color, here it's green
+
+  delay(5000); // Wait for 5 seconds, control refresh rate
+}
+
+  // Light up a specified number of NeoPixels
+void colorWipe(int numPixels, uint32_t color) {
+  for (int i = 0; i < numPixels; i++) {
+    pixels.setPixelColor(i, color);
+  }
+
+  // Turn off the unlit NeoPixels
+  for (int i = numPixels; i < NUMPIXELS; i++) {
+    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+  }
+
+  pixels.show(); // Display all set colors
 }
