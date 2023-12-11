@@ -1,18 +1,35 @@
 #include <DHT.h>
 #include <Adafruit_NeoPixel.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 #define DHT_PIN 9  // Set the Arduino pin to which DHT22 sensor is connected
+#define SOIL_MOISTURE_PIN 13  // Pin for connecting Capacitive Soil Moisture Sensor
 #define DHT_TYPE DHT22  // DHT22 sensor model
-#define PIN  6  // Pin for connecting NeoPixel
-#define NUMPIXELS  8  // Number of NeoPixels
+#define PIN 6  // Pin for connecting NeoPixel
+#define NUMPIXELS 8  // Number of NeoPixels
 
 DHT dht(DHT_PIN, DHT_TYPE);
-
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+// Capacitive Soil Moisture Sensor
+int soilMoisturePin = SOIL_MOISTURE_PIN;
+int soilMoistureValue = 0;
+
+// Initialize the LCD
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 void setup() {
   Serial.begin(9600);
   Serial.println("DHT22 Temperature and Humidity Sensor Test");
+
+  // LCD setup
+  lcd.init(); // LCD driver initialization
+  lcd.backlight(); // Open the backlight
+  lcd.begin(20, 4);  // Initialize the lcd
+  lcd.backlight();   // Turn on the backlight
+
+  // NeoPixel setup
   pixels.begin(); // Initialize NeoPixel
   dht.begin();
 }
@@ -24,13 +41,16 @@ void loop() {
   float humidity = dht.readHumidity();
   float temperature = dht.readTemperature();
 
+  // Read soil moisture data
+  soilMoistureValue = analogRead(soilMoisturePin);
+
   // Check if data reading is successful
   if (isnan(humidity) || isnan(temperature)) {
     Serial.println("Failed to read data from the DHT22 sensor!");
     return;
   }
 
-  // Print temperature and humidity data
+  // Print temperature, humidity, and soil moisture data
   Serial.print("Humidity: ");
   Serial.print(humidity);
   Serial.print("%\t");
@@ -38,16 +58,38 @@ void loop() {
   Serial.print(temperature);
   Serial.println("°C");
 
+  Serial.print("Soil Moisture: ");
+  Serial.println(soilMoistureValue);
+
   // Map the humidity value to the number of lit NeoPixels
   int numPixelsToLight = map(humidity, 10, 90, 1, 8);
 
   // Light up NeoPixels
   colorWipe(numPixelsToLight, pixels.Color(0, 255, 0)); // Using RGB color, here it's green
 
+  // Display information on LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Plant Holder");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Temprature: ");
+  lcd.print(temperature);
+  lcd.print(" C");
+
+  lcd.setCursor(0, 2);
+  lcd.print("Humidity: ");
+  lcd.print(humidity);
+  lcd.print("%");
+
+  lcd.setCursor(0, 3);
+  lcd.print("Soil Moisture: ");
+  lcd.print(soilMoistureValue);
+
   delay(5000); // Wait for 5 seconds, control refresh rate
 }
 
-  // Light up a specified number of NeoPixels
+// Light up a specified number of NeoPixels
 void colorWipe(int numPixels, uint32_t color) {
   for (int i = 0; i < numPixels; i++) {
     pixels.setPixelColor(i, color);
