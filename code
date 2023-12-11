@@ -8,6 +8,9 @@
 #define DHT_TYPE DHT22  // DHT22 sensor model
 #define PIN 6  // Pin for connecting NeoPixel
 #define NUMPIXELS 8  // Number of NeoPixels
+#define RELAY_PIN 2  // Pin for connecting the relay
+#define BUTTON_PIN 3  // Pin for connecting the button
+
 
 DHT dht(DHT_PIN, DHT_TYPE);
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -15,6 +18,12 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 // Capacitive Soil Moisture Sensor
 int soilMoisturePin = SOIL_MOISTURE_PIN;
 int soilMoistureValue = 0;
+
+// Button
+int buttonState = 0;
+int lastButtonState = HIGH;  // 上一次按钮状态
+unsigned long debounceTime = 0;  // 用于去抖动的时间戳
+unsigned long debounceDelay = 10;  // 去抖动延迟时间
 
 // Initialize the LCD
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -32,10 +41,21 @@ void setup() {
   // NeoPixel setup
   pixels.begin(); // Initialize NeoPixel
   dht.begin();
+
+  // Relay setup
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);  // Initialize relay to off state
+
+  // // Button setup
+  // pinMode(BUTTON_PIN, INPUT);
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);  // 设置按钮引脚为输入模式，并启用上拉电阻
+
+  delay(2000);
 }
 
 void loop() {
-  delay(2000);  // Delay 2 seconds to avoid frequent readings
+  delay(1000);  // Delay 2 seconds to avoid frequent readings
 
   // Read temperature and humidity data
   float humidity = dht.readHumidity();
@@ -53,6 +73,9 @@ void loop() {
     return;
   }
 
+  // Read the state of the button
+  buttonState = digitalRead(BUTTON_PIN);
+
   // Print temperature, humidity, and soil moisture data
   Serial.print("Humidity: ");
   Serial.print(humidity);
@@ -62,7 +85,37 @@ void loop() {
   Serial.println("°C");
 
   Serial.print("Soil Moisture: ");
-  Serial.println(moisturePercentage);
+  Serial.print(moisturePercentage);
+  Serial.println("%");
+
+  Serial.print("Button State: ");
+  Serial.println(buttonState);
+
+// Check if the button is pressed
+if (buttonState == HIGH) {
+  // Turn on the water pump (activate the relay)
+  digitalWrite(RELAY_PIN, HIGH);
+} else {
+  // Turn off the water pump (deactivate the relay)
+  digitalWrite(RELAY_PIN, LOW);
+}
+
+  int currentButtonState = digitalRead(BUTTON_PIN);
+
+  // 去抖动逻辑
+  if (currentButtonState != lastButtonState) {
+    debounceTime = millis();
+  }
+
+  if (millis() - debounceTime > debounceDelay) {
+    if (currentButtonState == HIGH) {
+      digitalWrite(RELAY_PIN, HIGH);
+    } else {
+      digitalWrite(RELAY_PIN, LOW);
+    }
+  }
+
+  lastButtonState = currentButtonState;
 
   // Map the humidity value to the number of lit NeoPixels
   int numPixelsToLight = map(moisturePercentage, 10, 90, 1, 8);
@@ -76,7 +129,7 @@ void loop() {
   lcd.print("Plant Holder");
 
   lcd.setCursor(0, 1);
-  lcd.print("Temprature: ");
+  lcd.print("Temperature: ");
   lcd.print(temperature);
   lcd.print(" C");
 
@@ -90,7 +143,7 @@ void loop() {
   lcd.print(moisturePercentage);
   lcd.print("%");
 
-  delay(5000); // Wait for 5 seconds, control refresh rate
+  // delay(1000); // Wait for 5 seconds, control refresh rate
 }
 
 // Light up a specified number of NeoPixels
