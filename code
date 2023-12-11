@@ -4,7 +4,7 @@
 #include <LiquidCrystal_I2C.h>
 
 #define DHT_PIN 9  // Set the Arduino pin to which DHT22 sensor is connected
-#define SOIL_MOISTURE_PIN 13  // Pin for connecting Capacitive Soil Moisture Sensor
+#define SOIL_MOISTURE_PIN A0  // Pin for connecting Capacitive Soil Moisture Sensor
 #define DHT_TYPE DHT22  // DHT22 sensor model
 #define PIN 6  // Pin for connecting NeoPixel
 #define NUMPIXELS 8  // Number of NeoPixels
@@ -44,6 +44,9 @@ void loop() {
   // Read soil moisture data
   soilMoistureValue = analogRead(soilMoisturePin);
 
+  // Map the raw reading to a range of 0-100, the specific mapping may need adjustment based on the sensor's specifications
+  int moisturePercentage = map(soilMoistureValue, 0, 1023, 0, 100);
+
   // Check if data reading is successful
   if (isnan(humidity) || isnan(temperature)) {
     Serial.println("Failed to read data from the DHT22 sensor!");
@@ -59,10 +62,10 @@ void loop() {
   Serial.println("°C");
 
   Serial.print("Soil Moisture: ");
-  Serial.println(soilMoistureValue);
+  Serial.println(moisturePercentage);
 
   // Map the humidity value to the number of lit NeoPixels
-  int numPixelsToLight = map(humidity, 10, 90, 1, 8);
+  int numPixelsToLight = map(moisturePercentage, 10, 90, 1, 8);
 
   // Light up NeoPixels
   colorWipe(numPixelsToLight, pixels.Color(0, 255, 0)); // Using RGB color, here it's green
@@ -84,7 +87,8 @@ void loop() {
 
   lcd.setCursor(0, 3);
   lcd.print("Soil Moisture: ");
-  lcd.print(soilMoistureValue);
+  lcd.print(moisturePercentage);
+  lcd.print("%");
 
   delay(5000); // Wait for 5 seconds, control refresh rate
 }
