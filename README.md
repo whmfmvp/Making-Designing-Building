@@ -1,7 +1,7 @@
 # Making-Designing-Building
 CASA0016: Making, Designing &amp; Building Connected Sensor Systems
 
-![plant holder](\plant_holder.jpg)
+![plant holder](/plant_holder.jpg)
 
 Introducing my innovative Plant Holder – the perfect companion for your beloved plants! This state-of-the-art device seamlessly combines technology and functionality to ensure your plants thrive in the optimal conditions. Here's a breakdown of its key features:
 
